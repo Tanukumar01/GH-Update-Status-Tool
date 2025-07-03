@@ -26,7 +26,7 @@ app.get('/process-tickets', async (req, res) => {
   const response = await sheets.spreadsheets.values.get({ spreadsheetId: sheetId, range });
   const rows = response.data.values;
 
-  if (!rows.length) return res.send('No data found.');
+  if (!rows.length) return res.json({ result: 'No data found.' });
 
   for (let i = 0; i < rows.length; i++) {
     const [ticketId, subject, content, playbookName, status, issueNumber, ghiStatus] = rows[i];
@@ -57,7 +57,7 @@ app.get('/process-tickets', async (req, res) => {
     }
   }
 
-  res.status(200).send('Tickets processed.');
+  res.status(200).json({ result: 'Tickets processed.' });
 });
 
 app.listen(3000, () => console.log('Server running on port http://localhost:3000'));
