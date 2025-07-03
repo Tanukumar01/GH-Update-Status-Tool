@@ -37,6 +37,7 @@ GITHUB_ISSUE_API_URL=your-github-issue-api-endpoint
 ```
 
 4. Place your Google Service Account JSON file in the project root and update the path in `.env`.
+   **Note:** The `service-account.json` file is not included in the repository for security reasons. You need to add your own credentials file.
 
 ## Configuration
 
@@ -108,8 +109,8 @@ Processes all tickets in the Google Sheet and creates GitHub issues for Engineer
 gh-update-status/
 ├── server.js              # Main application file
 ├── package.json           # Dependencies and scripts
-├── service-account.json   # Google Service Account credentials
 ├── .env                   # Environment variables (create this)
+├── .gitignore            # Git ignore rules
 └── README.md             # This file
 ```
 
