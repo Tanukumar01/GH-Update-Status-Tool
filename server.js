@@ -18,46 +18,50 @@ async function getSheet() {
 
 // Fetch and process tickets
 app.get('/process-tickets', async (req, res) => {
-  const sheets = await getSheet();
-  const sheetId = process.env.GOOGLE_SHEET_ID;
-  const range = 'Sheet1!A2:H'; // Adjust as needed
+  try {
+    const sheets = await getSheet();
+    const sheetId = process.env.GOOGLE_SHEET_ID;
+    const range = 'Sheet1!A2:H'; // Adjust as needed
 
-  // 1. Read data
-  const response = await sheets.spreadsheets.values.get({ spreadsheetId: sheetId, range });
-  const rows = response.data.values;
+    // 1. Read data
+    const response = await sheets.spreadsheets.values.get({ spreadsheetId: sheetId, range });
+    const rows = response.data.values;
 
-  if (!rows.length) return res.json({ result: 'No data found.' });
+    if (!rows.length) return res.json({ result: 'No data found.' });
 
-  for (let i = 0; i < rows.length; i++) {
-    const [ticketId, subject, content, playbookName, status, issueNumber, ghiStatus] = rows[i];
+    for (let i = 0; i < rows.length; i++) {
+      const [ticketId, subject, content, playbookName, status, issueNumber, ghiStatus] = rows[i];
 
-    if (playbookName === 'EngineeringBug' && !issueNumber) {
-      // 2. Create GitHub issue via my github_issue_create API
-      const issueRes = await axios.post(process.env.GITHUB_ISSUE_API_URL, {
-        owner: "Tanukumar01",
-        repo: "Tech-blend",
-        title: subject,
-        body: content,
-      });
-      console.log(issueRes.data);
+      if (playbookName === 'EngineeringBug' && !issueNumber) {
+        // 2. Create GitHub issue via my github_issue_create API
+        const issueRes = await axios.post(process.env.GITHUB_ISSUE_API_URL, {
+          owner: "Tanukumar01",
+          repo: "Tech-blend",
+          title: subject,
+          body: content,
+        });
+        console.log(issueRes.data);
 
-      const newIssueNumber = issueRes.data.issue.number;
-      const newGhiStatus = issueRes.data.issue.state === 'open' ? 'Open' : 'Close';
+        const newIssueNumber = issueRes.data.issue.number;
+        const newGhiStatus = issueRes.data.issue.state === 'open' ? 'Open' : 'Close';
 
-      // 3. Update Google Sheet
-      const updateRange = `E${i + 2}:G${i + 2}`;
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: sheetId,
-        range: updateRange,
-        valueInputOption: 'RAW',
-        requestBody: {
-          values: [['Triggered', newIssueNumber, newGhiStatus]],
-        },
-      });
+        // 3. Update Google Sheet
+        const updateRange = `E${i + 2}:G${i + 2}`;
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: sheetId,
+          range: updateRange,
+          valueInputOption: 'RAW',
+          requestBody: {
+            values: [['Triggered', newIssueNumber, newGhiStatus]],
+          },
+        });
+      }
     }
-  }
 
-  res.status(200).json({ result: 'Tickets processed.' });
+    res.status(200).json({ result: 'Tickets processed.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
 });
 
 app.listen(3000, () => console.log('Server running on port http://localhost:3000'));
