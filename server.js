@@ -6,6 +6,15 @@ require('dotenv').config();
 const app = express();
 app.use(express.json());
 
+// Health check endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'GitHub Update Status Tool is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Google Sheets setup
 async function getSheet() {
   const auth = new google.auth.GoogleAuth({
@@ -19,15 +28,32 @@ async function getSheet() {
 // Fetch and process tickets
 app.get('/process-tickets', async (req, res) => {
   try {
+    console.log('Starting ticket processing...');
+    
+    // Check environment variables
+    if (!process.env.GOOGLE_SHEET_ID) {
+      console.error('GOOGLE_SHEET_ID environment variable is missing');
+      return res.status(500).json({ error: 'GOOGLE_SHEET_ID environment variable is missing' });
+    }
+    
+    if (!process.env.GITHUB_ISSUE_API_URL) {
+      console.error('GITHUB_ISSUE_API_URL environment variable is missing');
+      return res.status(500).json({ error: 'GITHUB_ISSUE_API_URL environment variable is missing' });
+    }
+    
     const sheets = await getSheet();
     const sheetId = process.env.GOOGLE_SHEET_ID;
     const range = 'Sheet1!A2:H'; // Adjust as needed
+
+    console.log(`Fetching data from sheet: ${sheetId}, range: ${range}`);
 
     // 1. Read data
     const response = await sheets.spreadsheets.values.get({ spreadsheetId: sheetId, range });
     const rows = response.data.values;
 
-    if (!rows.length) return res.json({ result: 'No data found.' });
+    console.log(`Found ${rows ? rows.length : 0} rows of data`);
+
+    if (!rows || !rows.length) return res.json({ result: 'No data found.' });
 
     for (let i = 0; i < rows.length; i++) {
       const [ticketId, subject, content, playbookName, status, issueNumber, ghiStatus] = rows[i];
@@ -65,4 +91,5 @@ app.get('/process-tickets', async (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log('Server running on port http://localhost:3000'));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
