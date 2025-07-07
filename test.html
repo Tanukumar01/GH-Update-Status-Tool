@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>GitHub Update Status Tool - API Test</h1>
+    
+    <h2>Test GET Request</h2>
+    <button onclick="testGet()">Test GET /process-tickets</button>
+    <div id="getResult"></div>
+    
+    <h2>Test POST Request</h2>
+    <button onclick="testPost()">Test POST /process-tickets</button>
+    <div id="postResult"></div>
+    
+    <h2>Test Health Check</h2>
+    <button onclick="testHealth()">Test GET /</button>
+    <div id="healthResult"></div>
+
+    <script>
+        async function testGet() {
+            try {
+                const response = await fetch('https://gh-update-status-tool.onrender.com/process-tickets', {
+                    method: 'GET'
+                });
+                const data = await response.json();
+                document.getElementById('getResult').innerHTML = 
+                    `<pre>Status: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('getResult').innerHTML = 
+                    `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+
+        async function testPost() {
+            try {
+                const response = await fetch('https://gh-update-status-tool.onrender.com/process-tickets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                const data = await response.json();
+                document.getElementById('postResult').innerHTML = 
+                    `<pre>Status: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('postResult').innerHTML = 
+                    `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch('https://gh-update-status-tool.onrender.com/', {
+                    method: 'GET'
+                });
+                const data = await response.json();
+                document.getElementById('healthResult').innerHTML = 
+                    `<pre>Status: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('healthResult').innerHTML = 
+                    `<pre>Error: ${error.message}</pre>`;
+            }
+        }
+    </script>
+</body>
+</html> 
