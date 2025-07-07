@@ -2,9 +2,11 @@ const express = require('express');
 const { google } = require('googleapis');
 const axios = require('axios');
 require('dotenv').config();
+const cors = require('cors');
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // Health check endpoint
 app.get('/', (req, res) => {
