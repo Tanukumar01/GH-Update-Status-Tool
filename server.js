@@ -86,8 +86,16 @@ app.get('/process-tickets', async (req, res) => {
 
     res.status(200).json({ result: 'Tickets processed.' });
   } catch (error) {
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+      console.error('Error response headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('Error request:', error.request);
+    } else {
+      console.error('Error message:', error.message);
+    }
     res.status(500).json({ error: error.message || 'Internal server error' });
-    console.log(error);
   }
 });
 
@@ -138,8 +146,16 @@ app.post('/process-tickets', async (req, res) => {
     }
     res.status(200).json({ result: 'Tickets processed.' });
   } catch (error) {
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+      console.error('Error response headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('Error request:', error.request);
+    } else {
+      console.error('Error message:', error.message);
+    }
     res.status(500).json({ error: error.message || 'Internal server error' });
-    console.log(error);
   }
 });
 
