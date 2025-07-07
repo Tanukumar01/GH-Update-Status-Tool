@@ -38,11 +38,6 @@ app.get('/process-tickets', async (req, res) => {
       return res.status(500).json({ error: 'GOOGLE_SHEET_ID environment variable is missing' });
     }
     
-    if (!process.env.GITHUB_ISSUE_API_URL) {
-      console.error('GITHUB_ISSUE_API_URL environment variable is missing');
-      return res.status(500).json({ error: 'GITHUB_ISSUE_API_URL environment variable is missing' });
-    }
-    
     const sheets = await getSheet();
     const sheetId = process.env.GOOGLE_SHEET_ID;
     const range = 'Sheet1!A2:H'; // Adjust as needed
@@ -61,17 +56,28 @@ app.get('/process-tickets', async (req, res) => {
       const [ticketId, subject, content, playbookName, status, issueNumber, ghiStatus] = rows[i];
 
       if (playbookName === 'EngineeringBug' && !issueNumber) {
-        // 2. Create GitHub issue via my github_issue_create API
-        const issueRes = await axios.post(process.env.GITHUB_ISSUE_API_URL, {
-          owner: "Tanukumar01",
-          repo: "Tech-blend",
-          title: subject,
-          body: content,
-        });
+        // 2. Create GitHub issue directly using GitHub API
+        const githubApiUrl = `https://api.github.com/repos/Tanukumar01/Tech-blend/issues`;
+        const githubToken = process.env.GITHUB_TOKEN;
+
+        const issueRes = await axios.post(
+          githubApiUrl,
+          {
+            title: subject,
+            body: content,
+          },
+          {
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Accept': 'application/vnd.github+json',
+              'User-Agent': 'gh-update-status-tool'
+            }
+          }
+        );
         console.log(issueRes.data);
 
-        const newIssueNumber = issueRes.data.issue.number;
-        const newGhiStatus = issueRes.data.issue.state === 'open' ? 'Open' : 'Close';
+        const newIssueNumber = issueRes.data.number;
+        const newGhiStatus = issueRes.data.state === 'open' ? 'Open' : 'Close';
 
         // 3. Update Google Sheet
         const updateRange = `E${i + 2}:G${i + 2}`;
@@ -105,15 +111,10 @@ app.get('/process-tickets', async (req, res) => {
 app.post('/process-tickets', async (req, res) => {
   try {
     console.log('Starting ticket processing (POST)...');
-    // Reuse the same logic as GET
     // Check environment variables
     if (!process.env.GOOGLE_SHEET_ID) {
       console.error('GOOGLE_SHEET_ID environment variable is missing');
       return res.status(500).json({ error: 'GOOGLE_SHEET_ID environment variable is missing' });
-    }
-    if (!process.env.GITHUB_ISSUE_API_URL) {
-      console.error('GITHUB_ISSUE_API_URL environment variable is missing');
-      return res.status(500).json({ error: 'GITHUB_ISSUE_API_URL environment variable is missing' });
     }
     const sheets = await getSheet();
     const sheetId = process.env.GOOGLE_SHEET_ID;
@@ -126,15 +127,30 @@ app.post('/process-tickets', async (req, res) => {
     for (let i = 0; i < rows.length; i++) {
       const [ticketId, subject, content, playbookName, status, issueNumber, ghiStatus] = rows[i];
       if (playbookName === 'EngineeringBug' && !issueNumber) {
-        const issueRes = await axios.post(process.env.GITHUB_ISSUE_API_URL, {
-          owner: "Tanukumar01",
-          repo: "Tech-blend",
-          title: subject,
-          body: content,
-        });
+        // 2. Create GitHub issue directly using GitHub API
+        const githubApiUrl = `https://api.github.com/repos/Tanukumar01/Tech-blend/issues`;
+        const githubToken = process.env.GITHUB_TOKEN;
+
+        const issueRes = await axios.post(
+          githubApiUrl,
+          {
+            title: subject,
+            body: content,
+          },
+          {
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Accept': 'application/vnd.github+json',
+              'User-Agent': 'gh-update-status-tool'
+            }
+          }
+        );
         console.log(issueRes.data);
-        const newIssueNumber = issueRes.data.issue.number;
-        const newGhiStatus = issueRes.data.issue.state === 'open' ? 'Open' : 'Close';
+
+        const newIssueNumber = issueRes.data.number;
+        const newGhiStatus = issueRes.data.state === 'open' ? 'Open' : 'Close';
+
+        // 3. Update Google Sheet
         const updateRange = `E${i + 2}:G${i + 2}`;
         await sheets.spreadsheets.values.update({
           spreadsheetId: sheetId,
